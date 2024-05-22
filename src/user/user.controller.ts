@@ -1,9 +1,9 @@
-import { Post, Body, Controller } from '@nestjs/common';
+import { Post, Body, Controller, HttpCode } from '@nestjs/common';
 import { UserService } from './user.service';
 import { HttpException } from '@nestjs/common/exceptions/http.exception';
 
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { LoginUserDto } from './dto/login.dto';
+import { LoginUserDTO } from './dto/auth.dto';
 
 @ApiBearerAuth()
 @ApiTags('user')
@@ -12,9 +12,8 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('/login')
-  async login(
-    @Body('user') loginUserDto: LoginUserDto,
-  ): Promise<{ token: string }> {
+  @HttpCode(200)
+  async login(@Body() loginUserDto: LoginUserDTO): Promise<{ token: string }> {
     try {
       const token = await this.userService.login(loginUserDto);
       return { token };

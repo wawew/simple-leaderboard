@@ -9,13 +9,6 @@ import * as jwt from 'jsonwebtoken';
 export const UserDecorator = createParamDecorator(
   (data: { field: any; roles: string[] }, ctx: ExecutionContext) => {
     const req = ctx.switchToHttp().getRequest();
-    if (!!req.user) {
-      const user = !!data.field ? req.user[data.field] : req.user;
-      if (data.roles.includes(user.role)) {
-        return user;
-      }
-    }
-
     const token = req.headers.authorization
       ? (req.headers.authorization as string).split(' ')
       : null;

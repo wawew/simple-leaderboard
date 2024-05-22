@@ -1,32 +1,16 @@
-import { LeaderboardEntity } from 'src/leaderboard/leaderboard.entity';
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  OneToOne,
-  JoinColumn,
-} from 'typeorm';
-import { UserCredentialEntity } from './user_credential.entity';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('users')
 export class UserEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ name: 'name', nullable: false })
   name: string;
 
-  @Column()
+  @Column({ name: 'email', nullable: false })
   email: string;
 
-  @Column()
+  @Column({ name: 'role', nullable: false })
   role: string;
-
-  @OneToOne(() => UserCredentialEntity, (credential) => credential.user)
-  @JoinColumn()
-  credential: UserCredentialEntity;
-
-  @OneToOne(() => LeaderboardEntity, (leaderboards) => leaderboards.player)
-  @JoinColumn()
-  leaderboard: LeaderboardEntity;
 }

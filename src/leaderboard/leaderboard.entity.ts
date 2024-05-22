@@ -1,17 +1,24 @@
 import { UserEntity } from 'src/user/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 
 @Entity('leaderboards')
 export class LeaderboardEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ name: 'score', nullable: false })
   score: number;
 
-  @Column('player_id')
+  @Column({ name: 'player_id', nullable: false })
   playerId: number;
 
-  @OneToOne(() => UserEntity, (user) => user.leaderboard)
+  @ManyToOne(() => UserEntity)
+  @JoinColumn({ name: 'player_id', referencedColumnName: 'id' })
   player: UserEntity;
 }

@@ -1,9 +1,17 @@
-import { Get, Post, Body, Controller } from '@nestjs/common';
-
+import {
+  Get,
+  Post,
+  Body,
+  Controller,
+  HttpException,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { LeaderboardService } from './leaderboard.service';
 import { UserDecorator } from 'src/user/user.decorator';
 import { UserEntity } from 'src/user/user.entity';
+import { SubmitScoreDTO } from './dto/leaderboard.dto';
 
 @ApiBearerAuth()
 @ApiTags('leaderboard')
@@ -12,24 +20,40 @@ export class LeaderboardController {
   constructor(private readonly leaderboardService: LeaderboardService) {}
 
   @Post('/scores')
+  @HttpCode(201)
   async submitScore(
     @UserDecorator({ field: null, roles: ['PLAYER', 'ADMIN'] })
     user: UserEntity,
-    @Body() body: { score: number; playerId?: number },
-  ): Promise<void> {
-    if (!body.playerId && user.role == 'ADMIN') {
-      await this.leaderboardService.submitScore(body.playerId, body.score);
+    @Body() spec: SubmitScoreDTO,
+  ): Promise<{ message: string }> {
+    if (user.role == 'ADMIN') {
+      if (!spec.playerId) {
+        throw new HttpException(
+          'playerId is mandatory.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      await this.leaderboardService.submitScore(spec);
     } else {
-      await this.leaderboardService.submitScore(user.id, body.score);
+      await this.leaderboardService.submitScore({
+        playerId: user.id,
+        score: spec.score,
+      });
     }
+    return { message: 'Score submitted' };
   }
 
   @Get('/leaderboard')
-  async getLeaderboard(): Promise<{ name: string; score: number }[]> {
+  @HttpCode(200)
+  async getLeaderboard(): Promise<{
+    leaderboards: { name: string; score: number }[];
+  }> {
     const leaderboard = await this.leaderboardService.getLeaderboard();
-    return leaderboard.map((entry) => ({
-      name: entry.player.name,
-      score: entry.score,
-    }));
+    return {
+      leaderboards: leaderboard.map((entry) => ({
+        name: entry.player.name,
+        score: entry.score,
+      })),
+    };
   }
 }

@@ -2,32 +2,35 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
-import jwt from 'jsonwebtoken';
-import { LoginUserDto } from './dto/login.dto';
+import * as jwt from 'jsonwebtoken';
+import { LoginUserDTO } from './dto/auth.dto';
 import { SECRET } from 'src/config';
 import { UserData } from './user.interface';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
+import { UserCredentialEntity } from './userCredential.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(UserCredentialEntity)
+    private readonly userCredentialRepository: Repository<UserCredentialEntity>,
   ) {}
 
-  async login({ email, password }: LoginUserDto): Promise<string> {
-    const user = await this.userRepository.findOne({ where: { email } });
-    if (!user) {
-      throw new Error('Invalid username or password');
+  async login({ email, password }: LoginUserDTO): Promise<string> {
+    const userCred = await this.userCredentialRepository.findOne({
+      where: { user: { email } },
+      relations: { user: true },
+    });
+    if (!userCred) {
+      throw new Error('Invalid username or passwords');
     }
 
-    const isValidPassword = await bcrypt.compare(
-      password,
-      user.credential.password,
-    );
+    const isValidPassword = await bcrypt.compare(password, userCred.password);
 
     if (isValidPassword) {
-      return this.generateJWT(user);
+      return this.generateJWT(userCred.user);
     }
 
     throw new Error('Invalid username or password');
@@ -56,10 +59,12 @@ export class UserService {
 
     return jwt.sign(
       {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
         exp: exp.getTime() / 1000,
       },
       SECRET,

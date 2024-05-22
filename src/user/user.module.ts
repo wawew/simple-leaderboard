@@ -3,7 +3,7 @@ import { UserController } from './user.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
 import { UserService } from './user.service';
-import { UserCredentialEntity } from './user_credential.entity';
+import { UserCredentialEntity } from './userCredential.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserEntity, UserCredentialEntity])],

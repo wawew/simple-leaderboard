@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LeaderboardEntity } from './leaderboard.entity';
+import { SubmitScoreDTO } from './dto/leaderboard.dto';
 
 @Injectable()
 export class LeaderboardService {
@@ -10,35 +11,25 @@ export class LeaderboardService {
     private readonly leaderboardRepository: Repository<LeaderboardEntity>,
   ) {}
 
-  async submitScore(
-    playerId: number,
-    score: number,
-  ): Promise<LeaderboardEntity> {
+  async submitScore({
+    playerId,
+    score,
+  }: SubmitScoreDTO): Promise<LeaderboardEntity> {
     let entry = await this.leaderboardRepository.findOne({
       where: { playerId },
     });
 
-    if (!entry) {
-      entry = this.leaderboardRepository.create({ playerId, score });
-    } else {
-      entry.score = score;
-    }
-
+    entry = this.leaderboardRepository.create({ playerId, score });
     return this.leaderboardRepository.save(entry);
   }
 
   async getLeaderboard(): Promise<LeaderboardEntity[]> {
-    return this.leaderboardRepository.find({
-      select: {
-        score: true,
-        player: {
-          name: true,
-        },
-      },
+    return await this.leaderboardRepository.find({
       order: {
         score: 'DESC',
       },
       take: 10,
+      relations: { player: true },
     });
   }
 }
